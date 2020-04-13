@@ -40,8 +40,6 @@ def SolveCplexModel2(P, heu = None, useHeuristicCallback = True, integer = True)
     Vext = [(0, None)] + [(v, a) for v in range(1, P.numVertices) for a in range(P.numTasks[P.request[v]])]
     Vidx = {v:k for (k, v) in enumerate(Vext)}
     numVext = len(Vext)
-    # adjacency lists
-    # AdjEx = [[u for v in range(len(Vext)) if u != v] for v in range(len(Vext))]
 
     # lambda function for getting activity times on the extended graph
     activityTime = lambda k, v: P.taskTimes[k][Vext[v][0]][Vext[v][1]]
@@ -89,8 +87,6 @@ def SolveCplexModel2(P, heu = None, useHeuristicCallback = True, integer = True)
         prob.variables.add(names = ['p'], obj = [1], lb = [0], ub = [cplex.infinity], types = ['C'])
     else:
         prob.variables.add(names = ['p'], obj = [1], lb = [0], ub = [cplex.infinity])
-
-    #prob.order.set([('p', 100, prob.order.branch_direction.default)])
 
     # Every activity of the service request by a custumer must must be executed 
     for v in range(1, P.numVertices):
@@ -167,8 +163,6 @@ def SolveCplexModel2(P, heu = None, useHeuristicCallback = True, integer = True)
             for v in range(1, numVext):
                 vars.append(xname(k, h, 0, v))
                 coefs.append(h+1)
-                #vars.append(qname(k, h, v, 0))
-                #coefs.append(1/P.availableTime)
             prob.linear_constraints.add(lin_expr=[[vars, coefs]], senses=['L'], rhs= [0])
 
     # flow out of the depot
@@ -205,7 +199,6 @@ def SolveCplexModel2(P, heu = None, useHeuristicCallback = True, integer = True)
                     vars, coefs = [xname(k,h,u,v), qname(k, h, u, v)], [-P.availableTime, 1]
 
                     prob.linear_constraints.add(lin_expr=[[vars,coefs]], senses = ['L'], rhs = [0])
-                    #prob.linear_constraints.advanced.add_lazy_constraints(lin_expr=[[vars,coefs]], senses = ['L'], rhs = [0])
 
     # create mipstart solution
     if integer and heu:
@@ -286,10 +279,8 @@ class Model2HeuristicCallback(HeuristicCallback):
             lastva = partialSolution[-1][team][-1][0], partialSolution[-1][team][-1][1]
             xval = lambda v, a: vardict[ self.xname(team, currentDay, self.Vidx[lastva], self.Vidx[v,a]) ] 
             yval = lambda v, a: vardict[ self.yname(team, currentDay, a, v) ]
-            # return min( availableTasks, key = lambda va: end(*va)*(2 -xval(*va) - yval(*va)) )
+            
             return max( availableTasks, key = lambda va: xval(*va) + yval(*va) )
-            #return max( availableTasks, key = lambda va: xval(*va) )
-            #return random.choice(sorted( availableTasks, key = lambda va: xval(*va) * yval(*va), reverse=True )[:3])
 
         heu = Constructive.Constructive(self.P, ChooseTaskHeuristicCallback)
         if len(heu) < cur:
