@@ -1,6 +1,5 @@
 import random
 import math
-from Graph import Graph
 
 class MPVRPIR:
     def __init__(self, 
